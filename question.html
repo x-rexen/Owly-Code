@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>OwlyCode - Wandbox</title>
+    
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+    
+    <style>
+        .CodeMirror {
+            height: 400px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🦉👓 OwlyCode</h1>
+    <p>Write your C++ code:</p>
+    <textarea id="code">#include &lt;bits/stdc++.h&gt;
+using namespace std;
+int main() {
+    cout << "Hello, World!" << endl;
+    return 0;
+}</textarea>
+    <br>
+    <label>Input (stdin):</label>
+    <input type="text" id="stdin" size="30" value="3 5">
+    <br><br>
+    <button onclick="runCode()">▶ Run Code</button>
+    <hr>
+    <h3>Output:</h3>
+    <pre id="output"></pre>
+    <p>⏱️ Est. Time: <span id="time"></span>s</p>
+    <p style="color:red" id="error"></p>
+
+    <!-- CodeMirror JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+    
+    <!-- OwlyCode API（你的精简版） -->
+    <script src="judge.js"></script>
+    
+    <script>
+        // ===== 初始化 CodeMirror =====
+        const editor = CodeMirror.fromTextArea(document.getElementById('code'), {
+            mode: 'text/x-c++src',
+            theme: 'dracula',
+            lineNumbers: true,
+            matchBrackets: true,
+            autoCloseBrackets: true,
+            indentUnit: 4,
+            tabSize: 4,
+            indentWithTabs: false,
+            extraKeys: {
+                "Tab": function(cm) {
+                    cm.replaceSelection("    ", "end");
+                }
+            }
+        });
+        
+        // ===== 运行代码 =====
+        async function runCode() {
+            const code = editor.getValue();
+            const stdin = document.getElementById('stdin').value;
+            
+            document.getElementById('output').textContent = 'Running...';
+            document.getElementById('time').textContent = '...';
+            document.getElementById('error').textContent = '';
+            
+            // 调用你的 judge 函数（两次请求法）
+            const result = await judge(code, stdin);
+            
+            document.getElementById('output').textContent = result.output || '(no output)';
+            document.getElementById('time').textContent = result.time.toFixed(4);
+            document.getElementById('error').textContent = result.error;
+        }
+    </script>
+
+</body>
+</html>
