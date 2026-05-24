@@ -53,7 +53,7 @@ int main() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
     
-    <!-- OwlyCode API -->
+    <!-- OwlyCode API（你的精简版） -->
     <script src="owlycode-api.js"></script>
     
     <script>
@@ -119,7 +119,8 @@ int main() {
             document.getElementById('time').textContent = '...';
             document.getElementById('error').textContent = '';
             
-            const result = await owlyRunAccurate(code, stdin);
+            // 调用你的 judge 函数（两次请求法）
+            const result = await judge(code, stdin);
             
             document.getElementById('output').textContent = result.output || '(no output)';
             document.getElementById('time').textContent = result.time.toFixed(4);
