@@ -25,11 +25,6 @@ int main() {
     
     <br><br>
     
-    <label>⏰ Time Limit (seconds):</label>
-    <input type="number" id="timeLimit" value="2" min="1" max="10" step="1" style="width:60px">
-    
-    <br><br>
-    
     <button onclick="runCode()">▶ Run Code</button>
     
     <hr>
@@ -37,58 +32,89 @@ int main() {
     <h3>Output:</h3>
     <pre id="output"></pre>
     
-    <p>⏱️ Time: <span id="time"></span>s</p>
+    <p>⏱️ Estimated Time: <span id="time"></span>s</p>
     <p style="color:red" id="error"></p>
+    
+    <details>
+        <summary>🔍 Debug Info</summary>
+        <p>Network baseline: <span id="baseline"></span>s</p>
+        <p>Total time: <span id="total"></span>s</p>
+        <pre id="debug"></pre>
+    </details>
 
     <script>
         async function runCode() {
             const code = document.getElementById('code').value;
             const stdin = document.getElementById('stdin').value;
-            const TIME_LIMIT = parseFloat(document.getElementById('timeLimit').value);
             
-            document.getElementById('output').textContent = 'Running...';
+            document.getElementById('output').textContent = 'Measuring network...';
             document.getElementById('time').textContent = '...';
             document.getElementById('error').textContent = '';
             
             try {
-                // 换一个备用的 CORS 代理
                 const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
-                const ONECOMPILER_URL = 'https://onecompiler.com/api/code/exec';
+                const WANDBOX_URL = 'https://wandbox.org/api/compile.json';
+                const API_URL = CORS_PROXY + encodeURIComponent(WANDBOX_URL);
                 
-                const res = await fetch(CORS_PROXY + encodeURIComponent(ONECOMPILER_URL), {
+                // ===== 第一次：空跑，测网络延迟 =====
+                const startBaseline = performance.now();
+                
+                await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        language: 'cpp',
+                        compiler: 'gcc-head',
+                        code: 'int main(){}',
+                        stdin: ''
+                    })
+                });
+                
+                const endBaseline = performance.now();
+                const baseline = (endBaseline - startBaseline) / 1000;
+                document.getElementById('baseline').textContent = baseline.toFixed(4);
+                
+                // ===== 第二次：跑真实代码 =====
+                document.getElementById('output').textContent = 'Running your code...';
+                
+                const startReal = performance.now();
+                
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        compiler: 'gcc-head',
                         code: code,
-                        input: stdin
+                        stdin: stdin
                     })
                 });
                 
                 const data = await res.json();
                 
-                const executionTime = data.executionTime || 0;
+                const endReal = performance.now();
+                const totalTime = (endReal - startReal) / 1000;
+                document.getElementById('total').textContent = totalTime.toFixed(4);
                 
-                if (executionTime > TIME_LIMIT) {
-                    document.getElementById('output').textContent = 'Time Limit Exceeded';
-                    document.getElementById('time').textContent = executionTime.toFixed(4);
+                // ===== 估算执行时间 =====
+                const estimatedCpuTime = totalTime - baseline;
+                document.getElementById('time').textContent = estimatedCpuTime.toFixed(4);
+                
+                // ===== 显示结果 =====
+                if (data.program_output) {
+                    document.getElementById('output').textContent = data.program_output;
                 }
-                else if (data.stdout) {
-                    document.getElementById('output').textContent = data.stdout;
-                    document.getElementById('time').textContent = executionTime.toFixed(4);
+                else if (data.compiler_error) {
+                    document.getElementById('output').textContent = data.compiler_error;
+                    document.getElementById('error').textContent = 'Compile Error';
                 }
-                else if (data.compileError) {
-                    document.getElementById('error').textContent = 'Compile Error: ' + data.compileError;
-                    document.getElementById('time').textContent = executionTime.toFixed(4);
-                }
-                else if (data.stderr) {
-                    document.getElementById('error').textContent = 'Runtime Error: ' + data.stderr;
-                    document.getElementById('time').textContent = executionTime.toFixed(4);
+                else if (data.program_error) {
+                    document.getElementById('output').textContent = data.program_error;
+                    document.getElementById('error').textContent = 'Runtime Error';
                 }
                 else {
                     document.getElementById('output').textContent = '(no output)';
-                    document.getElementById('time').textContent = executionTime.toFixed(4);
                 }
+                
+                document.getElementById('debug').textContent = JSON.stringify(data, null, 2);
                 
             } catch (err) {
                 document.getElementById('error').textContent = 'Error: ' + err.message;
