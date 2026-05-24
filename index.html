@@ -19,31 +19,21 @@
 <body>
 
     <h1>🦉👓 OwlyCode</h1>
-    
     <p>Write your C++ code:</p>
-    <textarea id="code">#include &lt;iostream&gt;
+    <textarea id="code">#include &lt;bits/stdc++.h&gt;
 using namespace std;
 int main() {
-    int a, b;
-    cin >> a >> b;
-    cout << a + b;
+    cout << "Hello, World!" << endl;
     return 0;
 }</textarea>
-    
     <br>
-    
     <label>Input (stdin):</label>
     <input type="text" id="stdin" size="30" value="3 5">
-    
     <br><br>
-    
     <button onclick="runCode()">▶ Run Code</button>
-    
     <hr>
-    
     <h3>Output:</h3>
     <pre id="output"></pre>
-    
     <p>⏱️ Est. Time: <span id="time"></span>s</p>
     <p style="color:red" id="error"></p>
 
