@@ -1,0 +1,56 @@
+const config={
+    cors:'https://corsproxy.io/?',
+    url:'https://wandbox.org/api/compile.json',
+    tl:10
+};
+function geturl(){return config.cors+encodeURIComponent(config.url);}
+async function run(code,input=''){
+    const url=geturl();
+    const st=performance.now();
+    const con=new AbortController();
+    const toid=setTimeout(()=>con.abort(),config.tl*1000);
+    try{
+        const res=await fetch(url,{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({
+                compiler:'gcc-head',
+                code:code,
+                stdin:input,
+            }),
+            signal:con.signal
+        });
+        clearTimeout(toid);
+        const data=await res.json();
+        const t=(performance.now()-st)/1000;
+        let output='';
+        let err='';
+        if(data.program_output){output=data.program_output;}
+        else if(data.compiler_error){
+            output=data.compiler_error;
+            err='Compiler error';
+        }else if(data.program_error){
+            output=data.program_error;
+            err='Runtime error';
+        }
+        return {output:output,err:err,time:t,json:data};
+    }catch(e){
+        clearTimeout(toid);
+        if(err.name==='AbortError'){return{output:'Time limit exceeded',err:'TLE',time:config.tl,json:null};}
+        return{output:'',error:err.message,time:(performance.now()-st)/1000,json:null};
+    }
+}
+async function judge(code,input=''){
+    const blr=await run('int main(){}', '');
+    const bl=blr.time;
+    const res=await run(code,input);
+    const et=res.time-bl;
+    return{
+        output:result.output,
+        error:result.error,
+        time:estimatedTime>0?estimatedTime:result.time,
+        baseline:baseline,
+        totalTime:result.time,
+        json:result.json
+    };
+}
