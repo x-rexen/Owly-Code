@@ -37,7 +37,7 @@ async function run(code,input=''){
     }catch(e){
         clearTimeout(toid);
         if(err.name==='AbortError'){return{output:'Time limit exceeded',err:'TLE',time:config.tl,json:null};}
-        return{output:'',error:err.message,time:(performance.now()-st)/1000,json:null};
+        return{output:'',error:e.message,time:(performance.now()-st)/1000,json:null};
     }
 }
 async function judge(code,input='') {
