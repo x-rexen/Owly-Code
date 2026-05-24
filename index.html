@@ -32,24 +32,44 @@ int main() {
     <h3>Output:</h3>
     <pre id="output"></pre>
     
-    <p>⏱️ Time: <span id="time"></span>s</p>
+    <p>⏱️ Estimated Time: <span id="time"></span>s</p>
     <p style="color:red" id="error"></p>
 
     <script>
+        const CORS_PROXY = 'https://corsproxy.io/?';
+        const WANDBOX_URL = 'https://wandbox.org/api/compile.json';
+        const API_URL = CORS_PROXY + encodeURIComponent(WANDBOX_URL);
+        
         async function runCode() {
             const code = document.getElementById('code').value;
             const stdin = document.getElementById('stdin').value;
             
-            document.getElementById('output').textContent = 'Running...';
+            document.getElementById('output').textContent = 'Measuring network...';
             document.getElementById('time').textContent = '...';
             document.getElementById('error').textContent = '';
             
             try {
-                // CORS 代理 + Wandbox API
-                const CORS_PROXY = 'https://corsproxy.io/?';
-                const WANDBOX_URL = 'https://wandbox.org/api/compile.json';
+                // ===== 第一次：空跑，测网络延迟 =====
+                const startBaseline = performance.now();
                 
-                const res = await fetch(CORS_PROXY + encodeURIComponent(WANDBOX_URL), {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        compiler: 'gcc-head',
+                        code: 'int main(){}',
+                        stdin: ''
+                    })
+                });
+                
+                const baseline = (performance.now() - startBaseline) / 1000;
+                
+                // ===== 第二次：跑真实代码 =====
+                document.getElementById('output').textContent = 'Running...';
+                
+                const startReal = performance.now();
+                
+                const res = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -61,7 +81,13 @@ int main() {
                 
                 const data = await res.json();
                 
-                // 显示输出
+                const totalTime = (performance.now() - startReal) / 1000;
+                
+                // ===== 估算执行时间 =====
+                const estimatedCpuTime = totalTime - baseline;
+                document.getElementById('time').textContent = estimatedCpuTime.toFixed(4);
+                
+                // ===== 显示输出 =====
                 if (data.program_output) {
                     document.getElementById('output').textContent = data.program_output;
                 } else if (data.program_error) {
@@ -70,15 +96,12 @@ int main() {
                     document.getElementById('output').textContent = '(no output)';
                 }
                 
-                // 显示错误
+                // ===== 显示错误 =====
                 if (data.compiler_error) {
                     document.getElementById('error').textContent = 'Compile Error: ' + data.compiler_error;
                 } else if (data.program_error) {
-                    document.getElementById('error').textContent = data.program_error;
+                    document.getElementById('error').textContent = 'Runtime Error: ' + data.program_error;
                 }
-                
-                // 显示执行时间
-                document.getElementById('time').textContent = (data.executed || 0).toFixed(4);
                 
             } catch (err) {
                 document.getElementById('error').textContent = 'Error: ' + err.message;
