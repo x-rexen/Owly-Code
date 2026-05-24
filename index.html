@@ -32,51 +32,29 @@ int main() {
     <h3>Output:</h3>
     <pre id="output"></pre>
     
-    <p>⏱️ Estimated Time: <span id="time"></span>s</p>
+    <p>⏱️ Time: <span id="time"></span>s</p>
     <p style="color:red" id="error"></p>
-    
-    <details>
-        <summary>🔍 Debug</summary>
-        <p>Network baseline: <span id="baseline"></span>s</p>
-        <p>Total time: <span id="total"></span>s</p>
-    </details>
 
     <script>
         const CORS_PROXY = 'https://corsproxy.io/?';
         const WANDBOX_URL = 'https://wandbox.org/api/compile.json';
         const API_URL = CORS_PROXY + encodeURIComponent(WANDBOX_URL);
+        const TIME_LIMIT = 10; // ⏰ 10 秒超时
         
         async function runCode() {
             const code = document.getElementById('code').value;
             const stdin = document.getElementById('stdin').value;
             
-            document.getElementById('output').textContent = 'Measuring network...';
+            document.getElementById('output').textContent = 'Running...';
             document.getElementById('time').textContent = '...';
             document.getElementById('error').textContent = '';
-            document.getElementById('baseline').textContent = '...';
-            document.getElementById('total').textContent = '...';
+            
+            const startTime = performance.now();
             
             try {
-                // ===== 第一次：空跑，测网络延迟 =====
-                const startBaseline = performance.now();
-                
-                await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        compiler: 'gcc-head',
-                        code: 'int main(){}',
-                        stdin: ''
-                    })
-                });
-                
-                const baseline = (performance.now() - startBaseline) / 1000;
-                document.getElementById('baseline').textContent = baseline.toFixed(4);
-                
-                // ===== 第二次：跑真实代码 =====
-                document.getElementById('output').textContent = 'Running...';
-                
-                const startReal = performance.now();
+                // AbortController 用于 10 秒后自动取消请求
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), TIME_LIMIT * 1000);
                 
                 const res = await fetch(API_URL, {
                     method: 'POST',
@@ -85,44 +63,40 @@ int main() {
                         compiler: 'gcc-head',
                         code: code,
                         stdin: stdin
-                    })
+                    }),
+                    signal: controller.signal  // ← 绑定 AbortController
                 });
                 
+                clearTimeout(timeoutId);  // 清除超时计时器
+                
                 const data = await res.json();
+                const totalTime = (performance.now() - startTime) / 1000;
+                document.getElementById('time').textContent = totalTime.toFixed(4);
                 
-                const totalTime = (performance.now() - startReal) / 1000;
-                document.getElementById('total').textContent = totalTime.toFixed(4);
-                
-                // ===== 估算执行时间（两次请求法）=====
-                const estimatedCpuTime = totalTime - baseline;
-                
-                // 如果估算时间为负数（网络波动），直接显示总时间
-                if (estimatedCpuTime < 0) {
-                    document.getElementById('time').textContent = totalTime.toFixed(4) + ' (incl. network)';
-                } else {
-                    document.getElementById('time').textContent = estimatedCpuTime.toFixed(4);
-                }
-                
-                // ===== 显示输出 =====
                 if (data.program_output) {
                     document.getElementById('output').textContent = data.program_output;
+                } else if (data.compiler_error) {
+                    document.getElementById('output').textContent = data.compiler_error;
+                    document.getElementById('error').textContent = 'Compile Error';
                 } else if (data.program_error) {
                     document.getElementById('output').textContent = data.program_error;
+                    document.getElementById('error').textContent = 'Runtime Error';
                 } else {
                     document.getElementById('output').textContent = '(no output)';
                 }
                 
-                // ===== 显示错误 =====
-                if (data.compiler_error) {
-                    document.getElementById('error').textContent = 'Compile Error: ' + data.compiler_error;
-                } else if (data.program_error) {
-                    document.getElementById('error').textContent = 'Runtime Error: ' + data.program_error;
-                }
-                
             } catch (err) {
-                document.getElementById('error').textContent = 'Error: ' + err.message;
-                document.getElementById('output').textContent = '';
-                document.getElementById('time').textContent = 'Error';
+                const totalTime = (performance.now() - startTime) / 1000;
+                
+                // 判断是否超时
+                if (err.name === 'AbortError') {
+                    document.getElementById('output').textContent = 'Time Limit Exceeded (>10s)';
+                    document.getElementById('time').textContent = totalTime.toFixed(4);
+                    document.getElementById('error').textContent = '';
+                } else {
+                    document.getElementById('error').textContent = 'Error: ' + err.message;
+                    document.getElementById('time').textContent = totalTime.toFixed(4);
+                }
             }
         }
     </script>
