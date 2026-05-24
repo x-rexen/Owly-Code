@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <title>OwlyCode - OneCompiler</title>
+    <title>OwlyCode</title>
 </head>
 <body>
 
@@ -51,7 +51,11 @@ int main() {
             document.getElementById('error').textContent = '';
             
             try {
-                const res = await fetch('https://onecompiler.com/api/code/exec', {
+                // 加上 CORS 代理
+                const CORS_PROXY = 'https://corsproxy.io/?';
+                const ONECOMPILER_URL = 'https://onecompiler.com/api/code/exec';
+                
+                const res = await fetch(CORS_PROXY + encodeURIComponent(ONECOMPILER_URL), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -65,22 +69,18 @@ int main() {
                 
                 const executionTime = data.executionTime || 0;
                 
-                // 判断超时
                 if (executionTime > TIME_LIMIT) {
                     document.getElementById('output').textContent = 'Time Limit Exceeded';
                     document.getElementById('time').textContent = executionTime.toFixed(4);
                 }
-                // 正常输出
                 else if (data.stdout) {
                     document.getElementById('output').textContent = data.stdout;
                     document.getElementById('time').textContent = executionTime.toFixed(4);
                 }
-                // 编译错误
                 else if (data.compileError) {
                     document.getElementById('error').textContent = 'Compile Error: ' + data.compileError;
                     document.getElementById('time').textContent = executionTime.toFixed(4);
                 }
-                // 运行错误
                 else if (data.stderr) {
                     document.getElementById('error').textContent = 'Runtime Error: ' + data.stderr;
                     document.getElementById('time').textContent = executionTime.toFixed(4);
