@@ -34,6 +34,25 @@ int main() {
     
     <p>⏱️ Est. Time: <span id="time"></span>s</p>
     <p style="color:red" id="error"></p>
+    
+    <hr>
+    
+    <details>
+        <summary>🔍 Debug Panel</summary>
+        
+        <h4>1st Request (Baseline: <code>int main(){}</code>)</h4>
+        <p>⏱️ Time: <span id="time1"></span>s</p>
+        <p>📋 JSON:</p>
+        <pre id="json1" style="background:#1e1e1e;color:#d4d4d4;padding:10px;border-radius:8px;overflow-x:auto;max-height:200px;font-size:12px;"></pre>
+        
+        <h4>2nd Request (Your Code)</h4>
+        <p>⏱️ Time: <span id="time2"></span>s</p>
+        <p>📋 JSON:</p>
+        <pre id="json2" style="background:#1e1e1e;color:#d4d4d4;padding:10px;border-radius:8px;overflow-x:auto;max-height:200px;font-size:12px;"></pre>
+        
+        <h4>Calculation</h4>
+        <p>Est. Time = Total Time - Baseline = <span id="calc"></span></p>
+    </details>
 
     <script>
         const CORS_PROXY = 'https://corsproxy.io/?';
@@ -48,15 +67,20 @@ int main() {
             document.getElementById('output').textContent = 'Measuring...';
             document.getElementById('time').textContent = '...';
             document.getElementById('error').textContent = '';
+            document.getElementById('time1').textContent = '...';
+            document.getElementById('time2').textContent = '...';
+            document.getElementById('json1').textContent = '';
+            document.getElementById('json2').textContent = '';
+            document.getElementById('calc').textContent = '';
             
             try {
                 // ===== 第一次：空跑，测网络延迟 =====
-                const startBaseline = performance.now();
+                const start1 = performance.now();
                 
                 const controller1 = new AbortController();
                 const timeout1 = setTimeout(() => controller1.abort(), TIME_LIMIT * 1000);
                 
-                await fetch(API_URL, {
+                const res1 = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -69,17 +93,21 @@ int main() {
                 
                 clearTimeout(timeout1);
                 
-                const baseline = (performance.now() - startBaseline) / 1000;
+                const data1 = await res1.json();
+                const baseline = (performance.now() - start1) / 1000;
+                
+                document.getElementById('time1').textContent = baseline.toFixed(4);
+                document.getElementById('json1').textContent = JSON.stringify(data1, null, 2);
                 
                 // ===== 第二次：跑真实代码 =====
                 document.getElementById('output').textContent = 'Running...';
                 
-                const startReal = performance.now();
+                const start2 = performance.now();
                 
                 const controller2 = new AbortController();
                 const timeout2 = setTimeout(() => controller2.abort(), TIME_LIMIT * 1000);
                 
-                const res = await fetch(API_URL, {
+                const res2 = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -92,21 +120,25 @@ int main() {
                 
                 clearTimeout(timeout2);
                 
-                const data = await res.json();
-                const totalTime = (performance.now() - startReal) / 1000;
+                const data2 = await res2.json();
+                const totalTime = (performance.now() - start2) / 1000;
+                
+                document.getElementById('time2').textContent = totalTime.toFixed(4);
+                document.getElementById('json2').textContent = JSON.stringify(data2, null, 2);
                 
                 // ===== 估算执行时间 =====
                 const estimatedTime = totalTime - baseline;
                 document.getElementById('time').textContent = estimatedTime.toFixed(4);
+                document.getElementById('calc').textContent = totalTime.toFixed(4) + ' - ' + baseline.toFixed(4) + ' = ' + estimatedTime.toFixed(4) + 's';
                 
                 // ===== 显示输出 =====
-                if (data.program_output) {
-                    document.getElementById('output').textContent = data.program_output;
-                } else if (data.compiler_error) {
-                    document.getElementById('output').textContent = data.compiler_error;
+                if (data2.program_output) {
+                    document.getElementById('output').textContent = data2.program_output;
+                } else if (data2.compiler_error) {
+                    document.getElementById('output').textContent = data2.compiler_error;
                     document.getElementById('error').textContent = 'Compile Error';
-                } else if (data.program_error) {
-                    document.getElementById('output').textContent = data.program_error;
+                } else if (data2.program_error) {
+                    document.getElementById('output').textContent = data2.program_error;
                     document.getElementById('error').textContent = 'Runtime Error';
                 } else {
                     document.getElementById('output').textContent = '(no output)';
