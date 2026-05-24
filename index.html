@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <title>OwlyCode - Wandbox</title>
+    <title>OwlyCode - OneCompiler</title>
 </head>
 <body>
 
@@ -25,6 +25,11 @@ int main() {
     
     <br><br>
     
+    <label>⏰ Time Limit (seconds):</label>
+    <input type="number" id="timeLimit" value="2" min="1" max="10" step="1" style="width:60px">
+    
+    <br><br>
+    
     <button onclick="runCode()">▶ Run Code</button>
     
     <hr>
@@ -39,62 +44,54 @@ int main() {
         async function runCode() {
             const code = document.getElementById('code').value;
             const stdin = document.getElementById('stdin').value;
-            const TIME_LIMIT = 2.0;
+            const TIME_LIMIT = parseFloat(document.getElementById('timeLimit').value);
             
             document.getElementById('output').textContent = 'Running...';
             document.getElementById('time').textContent = '...';
             document.getElementById('error').textContent = '';
             
-            const startTime = performance.now();
-            
             try {
-                const CORS_PROXY = 'https://corsproxy.io/?';
-                const WANDBOX_URL = 'https://wandbox.org/api/compile.json';
-                
-                const res = await fetch(CORS_PROXY + encodeURIComponent(WANDBOX_URL), {
+                const res = await fetch('https://onecompiler.com/api/code/exec', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        compiler: 'gcc-head',
+                        language: 'cpp',
                         code: code,
-                        stdin: stdin
+                        input: stdin
                     })
                 });
                 
                 const data = await res.json();
                 
-                const endTime = performance.now();
-                const elapsed = (endTime - startTime) / 1000;
+                const executionTime = data.executionTime || 0;
                 
-                // 判断超时（粗略判断，包含网络延迟）
-                if (elapsed > 5 && !data.program_output) {
-                    document.getElementById('output').textContent = 'Time Limit Exceeded (or Timeout)';
-                    document.getElementById('time').textContent = '> ' + TIME_LIMIT + 's (waited ' + elapsed.toFixed(2) + 's)';
+                // 判断超时
+                if (executionTime > TIME_LIMIT) {
+                    document.getElementById('output').textContent = 'Time Limit Exceeded';
+                    document.getElementById('time').textContent = executionTime.toFixed(4);
                 }
-                else if (data.program_output) {
-                    document.getElementById('output').textContent = data.program_output;
-                    document.getElementById('time').textContent = elapsed.toFixed(4) + ' (incl. network)';
+                // 正常输出
+                else if (data.stdout) {
+                    document.getElementById('output').textContent = data.stdout;
+                    document.getElementById('time').textContent = executionTime.toFixed(4);
                 }
-                else if (data.compiler_error) {
-                    document.getElementById('output').textContent = data.compiler_error;
-                    document.getElementById('time').textContent = elapsed.toFixed(4) + ' (incl. network)';
+                // 编译错误
+                else if (data.compileError) {
+                    document.getElementById('error').textContent = 'Compile Error: ' + data.compileError;
+                    document.getElementById('time').textContent = executionTime.toFixed(4);
+                }
+                // 运行错误
+                else if (data.stderr) {
+                    document.getElementById('error').textContent = 'Runtime Error: ' + data.stderr;
+                    document.getElementById('time').textContent = executionTime.toFixed(4);
                 }
                 else {
-                    document.getElementById('output').textContent = data.program_error || '(no output)';
-                    document.getElementById('time').textContent = elapsed.toFixed(4) + ' (incl. network)';
-                }
-                
-                if (data.compiler_error) {
-                    document.getElementById('error').textContent = 'Compile Error';
-                }
-                if (data.program_error) {
-                    document.getElementById('error').textContent = 'Runtime Error';
+                    document.getElementById('output').textContent = '(no output)';
+                    document.getElementById('time').textContent = executionTime.toFixed(4);
                 }
                 
             } catch (err) {
                 document.getElementById('error').textContent = 'Error: ' + err.message;
-                document.getElementById('output').textContent = '';
-                document.getElementById('time').textContent = 'Error';
             }
         }
     </script>
