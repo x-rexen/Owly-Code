@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <title>OwlyCode</title>
+    <title>OwlyCode - Wandbox</title>
 </head>
 <body>
 
@@ -34,6 +34,13 @@ int main() {
     
     <p>⏱️ Time: <span id="time"></span>s</p>
     <p style="color:red" id="error"></p>
+    
+    <hr>
+    
+    <details>
+        <summary>🔍 Debug: Raw JSON Response</summary>
+        <pre id="debug" style="background:#1e1e1e;color:#d4d4d4;padding:10px;border-radius:8px;overflow-x:auto;"></pre>
+    </details>
 
     <script>
         async function runCode() {
@@ -43,9 +50,13 @@ int main() {
             document.getElementById('output').textContent = 'Running...';
             document.getElementById('time').textContent = '...';
             document.getElementById('error').textContent = '';
+            document.getElementById('debug').textContent = '';
             
             try {
-                const res = await fetch('https://wandbox.org/api/compile.json', {
+                const CORS_PROXY = 'https://corsproxy.io/?';
+                const WANDBOX_URL = 'https://wandbox.org/api/compile.json';
+                
+                const res = await fetch(CORS_PROXY + encodeURIComponent(WANDBOX_URL), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -57,18 +68,33 @@ int main() {
                 
                 const data = await res.json();
                 
-                document.getElementById('output').textContent = data.program_output || '(no output)';
-                document.getElementById('time').textContent = (data.executed || 0).toFixed(4);
+                // 🔍 显示完整 JSON
+                document.getElementById('debug').textContent = JSON.stringify(data, null, 2);
                 
+                // 显示输出
+                if (data.program_output) {
+                    document.getElementById('output').textContent = data.program_output;
+                } else if (data.program_error) {
+                    document.getElementById('output').textContent = data.program_error;
+                } else {
+                    document.getElementById('output').textContent = '(no output)';
+                }
+                
+                // 显示错误
                 if (data.compiler_error) {
                     document.getElementById('error').textContent = 'Compile Error: ' + data.compiler_error;
-                }
-                if (data.program_error) {
+                } else if (data.program_error) {
                     document.getElementById('error').textContent = 'Runtime Error: ' + data.program_error;
                 }
                 
+                // 显示执行时间
+                document.getElementById('time').textContent = (data.executed || 0).toFixed(4);
+                
             } catch (err) {
                 document.getElementById('error').textContent = 'Error: ' + err.message;
+                document.getElementById('output').textContent = '';
+                document.getElementById('time').textContent = 'Error';
+                document.getElementById('debug').textContent = 'Fetch Error: ' + err.message;
             }
         }
     </script>
