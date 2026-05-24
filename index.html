@@ -2,412 +2,157 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <title>OwlyCode</title>
+    <title>OwlyCode - Wandbox</title>
+    
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+    
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #1e1e1e;
-            color: #d4d4d4;
-            padding: 20px;
-        }
-        
-        .header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        .header h1 { color: #ebdbbd; font-size: 24px; }
-        .header .owl { font-size: 30px; }
-        
-        .main-container {
-            display: flex;
-            gap: 20px;
-        }
-        
-        .editor-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .template-bar {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .template-btn {
-            background: #2c3e2f;
-            color: #ebdbbd;
-            border: none;
-            padding: 6px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-        }
-        .template-btn:hover { background: #3c4e3f; }
-        
-        .editor-wrapper {
-            display: flex;
-            background: #252526;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid #3c3c3c;
-        }
-        
-        .line-numbers {
-            padding: 12px 8px;
-            background: #1e1e1e;
-            color: #858585;
-            text-align: right;
-            user-select: none;
-            font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 1.6;
-            min-width: 40px;
-            overflow-y: hidden;
-        }
-        
-        .code-area {
-            flex: 1;
-            position: relative;
-        }
-        
-        #code {
-            width: 100%;
+        .CodeMirror {
             height: 400px;
-            background: transparent;
-            color: transparent;
-            caret-color: white;
-            border: none;
-            padding: 12px;
-            font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 1.6;
-            resize: vertical;
-            outline: none;
-            position: relative;
-            z-index: 2;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-        }
-        
-        #highlight {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            padding: 12px;
-            font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 1.6;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            pointer-events: none;
-            z-index: 1;
-            color: #d4d4d4;
-        }
-        
-        .keyword { color: #569cd6; font-weight: bold; }
-        .builtin { color: #4ec9b0; }
-        .string { color: #ce9178; }
-        .number { color: #b5cea8; }
-        .comment { color: #6a9955; font-style: italic; }
-        .preprocessor { color: #9b9b9b; }
-        .function { color: #dcdcaa; }
-        .type { color: #4ec9b0; }
-        
-        .input-area {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        .input-area label { color: #d4d4d4; font-size: 14px; }
-        .input-area input {
-            flex: 1;
-            padding: 8px 12px;
-            background: #3c3c3c;
-            color: #d4d4d4;
-            border: 1px solid #555;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-        
-        .btn-run {
-            background: #2c3e2f;
-            color: #ebdbbd;
-            border: none;
-            padding: 10px 24px;
             border-radius: 8px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: bold;
+            font-size: 14px;
         }
-        .btn-run:hover { background: #3c4e3f; }
-        
-        .output-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .output-box {
-            background: #252526;
-            border: 1px solid #3c3c3c;
-            border-radius: 8px;
-            padding: 16px;
-            flex: 1;
-        }
-        .output-box h3 { color: #ebdbbd; margin-bottom: 8px; }
-        .output-box pre { color: #d4d4d4; white-space: pre-wrap; }
-        
-        .time-display { color: #858585; font-size: 14px; }
-        .error-display { color: #f44747; font-size: 14px; }
-        
-        details { margin-top: 10px; }
-        details summary { color: #858585; cursor: pointer; font-size: 13px; }
-        details pre { background: #1e1e1e; padding: 10px; border-radius: 6px; font-size: 12px; overflow-x: auto; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="owl">🦉👓</div>
-        <h1>OwlyCode</h1>
-    </div>
+    <h1>🦉👓 OwlyCode</h1>
     
-    <div class="main-container">
-        
-        <div class="editor-panel">
-            
-            <!-- 代码模板按钮 -->
-            <div class="template-bar">
-                <button class="template-btn" onclick="loadTemplate('empty')">📄 Empty</button>
-                <button class="template-btn" onclick="loadTemplate('ab')">➕ A+B</button>
-                <button class="template-btn" onclick="loadTemplate('loop')">🔁 For Loop</button>
-                <button class="template-btn" onclick="loadTemplate('array')">📊 Array</button>
-                <button class="template-btn" onclick="loadTemplate('vector')">📚 Vector</button>
-            </div>
-            
-            <!-- 编辑器 -->
-            <div class="editor-wrapper">
-                <div class="line-numbers" id="lineNumbers"></div>
-                <div class="code-area">
-                    <pre id="highlight"></pre>
-                    <textarea id="code" oninput="updateHighlight()" onscroll="syncScroll()" onkeydown="handleTab(event)"></textarea>
-                </div>
-            </div>
-            
-            <!-- Input -->
-            <div class="input-area">
-                <label>📥 Input (stdin):</label>
-                <input type="text" id="stdin" value="3 5">
-            </div>
-            
-            <button class="btn-run" onclick="runCode()">▶ Run Code</button>
-            
-        </div>
-        
-        <!-- Output -->
-        <div class="output-panel">
-            <div class="output-box">
-                <h3>📤 Output</h3>
-                <pre id="output">Click "Run Code" to see result...</pre>
-                <p class="time-display">⏱️ Est. Time: <span id="time">-</span>s</p>
-                <p class="error-display" id="error"></p>
-                
-                <details>
-                    <summary>🔍 Debug Panel</summary>
-                    <p class="time-display">Baseline: <span id="time1"></span>s</p>
-                    <pre id="json1"></pre>
-                    <p class="time-display">Total: <span id="time2"></span>s</p>
-                    <pre id="json2"></pre>
-                    <p class="time-display" id="calc"></p>
-                </details>
-            </div>
-        </div>
-        
-    </div>
+    <p>Write your C++ code:</p>
+    <textarea id="code">#include &lt;iostream&gt;
+using namespace std;
+int main() {
+    int a, b;
+    cin >> a >> b;
+    cout << a + b;
+    return 0;
+}</textarea>
+    
+    <br>
+    
+    <label>Input (stdin):</label>
+    <input type="text" id="stdin" size="30" value="3 5">
+    
+    <br><br>
+    
+    <button onclick="runCode()">▶ Run Code</button>
+    
+    <hr>
+    
+    <h3>Output:</h3>
+    <pre id="output"></pre>
+    
+    <p>⏱️ Est. Time: <span id="time"></span>s</p>
+    <p style="color:red" id="error"></p>
 
+    <!-- CodeMirror JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+    
     <script>
-        // ==================== 代码模板 ====================
+        // ===== 初始化 CodeMirror =====
+        const editor = CodeMirror.fromTextArea(document.getElementById('code'), {
+            mode: 'text/x-c++src',      // C++ 语法高亮
+            theme: 'dracula',            // 暗色主题
+            lineNumbers: true,           // 🔢 行号
+            matchBrackets: true,         // {} 高亮匹配
+            autoCloseBrackets: true,     // 自动补全 } ]
+            indentUnit: 4,               // Tab = 4 空格
+            tabSize: 4,
+            indentWithTabs: false,
+            extraKeys: {
+                "Tab": function(cm) {    // 🎯 Tab 键缩进
+                    cm.replaceSelection("    ", "end");
+                }
+            }
+        });
+        
+        // ===== 代码模板 =====
         const templates = {
-            'empty': '',
-            'ab': '#include <iostream>\nusing namespace std;\nint main() {\n    int a, b;\n    cin >> a >> b;\n    cout << a + b;\n    return 0;\n}',
-            'loop': '#include <iostream>\nusing namespace std;\nint main() {\n    for (int i = 0; i < 10; i++) {\n        cout << i << "\\n";\n    }\n    return 0;\n}',
-            'array': '#include <iostream>\nusing namespace std;\nint main() {\n    int arr[5] = {1, 2, 3, 4, 5};\n    for (int i = 0; i < 5; i++) {\n        cout << arr[i] << " ";\n    }\n    return 0;\n}',
-            'vector': '#include <iostream>\n#include <vector>\nusing namespace std;\nint main() {\n    vector<int> v = {1, 2, 3};\n    v.push_back(4);\n    for (int x : v) cout << x << " ";\n    return 0;\n}'
+            "A+B": `#include <iostream>
+using namespace std;
+int main() {
+    int a, b;
+    cin >> a >> b;
+    cout << a + b;
+    return 0;
+}`,
+            "Loop": `#include <iostream>
+using namespace std;
+int main() {
+    for (int i = 0; i < 10; i++) {
+        cout << i << " ";
+    }
+    return 0;
+}`,
+            "Array": `#include <iostream>
+#include <vector>
+using namespace std;
+int main() {
+    vector<int> arr = {1, 2, 3, 4, 5};
+    for (int x : arr) cout << x << " ";
+    return 0;
+}`
         };
         
-        function loadTemplate(name) {
-            document.getElementById('code').value = templates[name];
-            updateHighlight();
-        }
+        // 设置默认模板
+        editor.setValue(templates["A+B"]);
         
-        // ==================== Tab 键支持 ====================
-        function handleTab(e) {
-            if (e.key === 'Tab') {
-                e.preventDefault();
-                const textarea = e.target;
-                const start = textarea.selectionStart;
-                const end = textarea.selectionEnd;
-                textarea.value = textarea.value.substring(0, start) + '    ' + textarea.value.substring(end);
-                textarea.selectionStart = textarea.selectionEnd = start + 4;
-                updateHighlight();
-            }
-            // 自动补全括号
-            if (e.key === '{') {
-                e.preventDefault();
-                const textarea = e.target;
-                const start = textarea.selectionStart;
-                const end = textarea.selectionEnd;
-                textarea.value = textarea.value.substring(0, start) + '{}' + textarea.value.substring(end);
-                textarea.selectionStart = textarea.selectionEnd = start + 1;
-                updateHighlight();
-            }
-            if (e.key === '(') {
-                e.preventDefault();
-                const textarea = e.target;
-                const start = textarea.selectionStart;
-                const end = textarea.selectionEnd;
-                textarea.value = textarea.value.substring(0, start) + '()' + textarea.value.substring(end);
-                textarea.selectionStart = textarea.selectionEnd = start + 1;
-                updateHighlight();
-            }
-            if (e.key === '[') {
-                e.preventDefault();
-                const textarea = e.target;
-                const start = textarea.selectionStart;
-                const end = textarea.selectionEnd;
-                textarea.value = textarea.value.substring(0, start) + '[]' + textarea.value.substring(end);
-                textarea.selectionStart = textarea.selectionEnd = start + 1;
-                updateHighlight();
+        // ===== 模板切换 =====
+        function setTemplate(name) {
+            if (templates[name]) {
+                editor.setValue(templates[name]);
             }
         }
         
-        // ==================== 代码高亮 ====================
-        function updateHighlight() {
-            const code = document.getElementById('code').value;
-            const lines = code.split('\n');
-            
-            // 更新行号
-            document.getElementById('lineNumbers').innerHTML = lines.map((_, i) => i + 1).join('<br>');
-            
-            // 更新高亮
-            const highlighted = code
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/#include\s*<([^>]+)>/g, '<span class="preprocessor">#$&</span>')
-                .replace(/\b(int|float|double|char|bool|void|long|short|signed|unsigned|auto|const|static|struct|class|enum|typedef|using|namespace|return|if|else|for|while|do|break|continue|switch|case|default|new|delete|true|false)\b/g, '<span class="keyword">$&</span>')
-                .replace(/\b(cin|cout|endl|vector|map|set|queue|stack|string|pair|sort|find|push_back|pop_back|size|begin|end|make_pair)\b/g, '<span class="builtin">$&</span>')
-                .replace(/"([^"]*)"/g, '<span class="string">"$1"</span>')
-                .replace(/\b(\d+)\b/g, '<span class="number">$1</span>')
-                .replace(/\/\/.*/g, '<span class="comment">$&</span>');
-            
-            document.getElementById('highlight').innerHTML = highlighted;
-        }
-        
-        function syncScroll() {
-            const code = document.getElementById('code');
-            const highlight = document.getElementById('highlight');
-            highlight.scrollTop = code.scrollTop;
-            highlight.scrollLeft = code.scrollLeft;
-        }
-        
-        // 初始化
-        loadTemplate('ab');
-        
-        // ==================== API 调用 ====================
+        // ===== Wandbox API =====
         const CORS_PROXY = 'https://corsproxy.io/?';
         const WANDBOX_URL = 'https://wandbox.org/api/compile.json';
         const API_URL = CORS_PROXY + encodeURIComponent(WANDBOX_URL);
-        const TIME_LIMIT = 10;
         
         async function runCode() {
-            const code = document.getElementById('code').value;
+            const code = editor.getValue();  // 从 CodeMirror 获取代码
             const stdin = document.getElementById('stdin').value;
             
-            document.getElementById('output').textContent = 'Measuring...';
+            document.getElementById('output').textContent = 'Running...';
             document.getElementById('time').textContent = '...';
             document.getElementById('error').textContent = '';
-            document.getElementById('time1').textContent = '...';
-            document.getElementById('time2').textContent = '...';
-            document.getElementById('json1').textContent = '';
-            document.getElementById('json2').textContent = '';
-            document.getElementById('calc').textContent = '';
+            
+            const startTime = performance.now();
             
             try {
-                // 第一次：空跑
-                const start1 = performance.now();
-                const controller1 = new AbortController();
-                const timeout1 = setTimeout(() => controller1.abort(), TIME_LIMIT * 1000);
-                
-                const res1 = await fetch(API_URL, {
+                const res = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ compiler: 'gcc-head', code: 'int main(){}', stdin: '' }),
-                    signal: controller1.signal
+                    body: JSON.stringify({
+                        compiler: 'gcc-head',
+                        code: code,
+                        stdin: stdin
+                    })
                 });
                 
-                clearTimeout(timeout1);
-                const data1 = await res1.json();
-                const baseline = (performance.now() - start1) / 1000;
+                const data = await res.json();
+                const totalTime = (performance.now() - startTime) / 1000;
+                document.getElementById('time').textContent = totalTime.toFixed(4);
                 
-                document.getElementById('time1').textContent = baseline.toFixed(4);
-                document.getElementById('json1').textContent = JSON.stringify(data1, null, 2);
-                
-                // 第二次：真实代码
-                document.getElementById('output').textContent = 'Running...';
-                
-                const start2 = performance.now();
-                const controller2 = new AbortController();
-                const timeout2 = setTimeout(() => controller2.abort(), TIME_LIMIT * 1000);
-                
-                const res2 = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ compiler: 'gcc-head', code: code, stdin: stdin }),
-                    signal: controller2.signal
-                });
-                
-                clearTimeout(timeout2);
-                const data2 = await res2.json();
-                const totalTime = (performance.now() - start2) / 1000;
-                
-                document.getElementById('time2').textContent = totalTime.toFixed(4);
-                document.getElementById('json2').textContent = JSON.stringify(data2, null, 2);
-                
-                const estimatedTime = totalTime - baseline;
-                document.getElementById('time').textContent = estimatedTime.toFixed(4);
-                document.getElementById('calc').textContent = totalTime.toFixed(4) + ' - ' + baseline.toFixed(4) + ' = ' + estimatedTime.toFixed(4) + 's';
-                
-                if (data2.program_output) {
-                    document.getElementById('output').textContent = data2.program_output;
-                } else if (data2.compiler_error) {
-                    document.getElementById('output').textContent = data2.compiler_error;
+                if (data.program_output) {
+                    document.getElementById('output').textContent = data.program_output;
+                } else if (data.compiler_error) {
+                    document.getElementById('output').textContent = data.compiler_error;
                     document.getElementById('error').textContent = 'Compile Error';
-                } else if (data2.program_error) {
-                    document.getElementById('output').textContent = data2.program_error;
+                } else if (data.program_error) {
+                    document.getElementById('output').textContent = data.program_error;
                     document.getElementById('error').textContent = 'Runtime Error';
                 } else {
                     document.getElementById('output').textContent = '(no output)';
                 }
                 
             } catch (err) {
-                if (err.name === 'AbortError') {
-                    document.getElementById('output').textContent = 'Time Limit Exceeded (>10s)';
-                    document.getElementById('time').textContent = '>10';
-                } else {
-                    document.getElementById('error').textContent = 'Error: ' + err.message;
-                }
+                document.getElementById('error').textContent = 'Error: ' + err.message;
             }
         }
     </script>
