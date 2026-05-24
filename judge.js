@@ -40,12 +40,12 @@ async function run(code,input=''){
         return{output:'',error:err.message,time:(performance.now()-st)/1000,json:null};
     }
 }
-async function judge(code,input=''){
-    const blr=await run('int main(){}', '');
-    const bl=blr.time;
+async function judge(code,input='') {
+    const blr=await run('int main(){}','');
+    const baseline=blr.time;
     const res=await run(code,input);
-    const et=res.time-bl;
-    return{
+    const estimatedTime=res.time-baseline;
+    return {
         output:res.output,
         error:res.error,
         time:estimatedTime>0?estimatedTime:res.time,
