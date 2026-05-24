@@ -32,29 +32,52 @@ int main() {
     <h3>Output:</h3>
     <pre id="output"></pre>
     
-    <p>⏱️ Time: <span id="time"></span>s</p>
+    <p>⏱️ Est. Time: <span id="time"></span>s</p>
     <p style="color:red" id="error"></p>
 
     <script>
         const CORS_PROXY = 'https://corsproxy.io/?';
         const WANDBOX_URL = 'https://wandbox.org/api/compile.json';
         const API_URL = CORS_PROXY + encodeURIComponent(WANDBOX_URL);
-        const TIME_LIMIT = 10; // ⏰ 10 秒超时
+        const TIME_LIMIT = 10;
         
         async function runCode() {
             const code = document.getElementById('code').value;
             const stdin = document.getElementById('stdin').value;
             
-            document.getElementById('output').textContent = 'Running...';
+            document.getElementById('output').textContent = 'Measuring...';
             document.getElementById('time').textContent = '...';
             document.getElementById('error').textContent = '';
             
-            const startTime = performance.now();
-            
             try {
-                // AbortController 用于 10 秒后自动取消请求
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), TIME_LIMIT * 1000);
+                // ===== 第一次：空跑，测网络延迟 =====
+                const startBaseline = performance.now();
+                
+                const controller1 = new AbortController();
+                const timeout1 = setTimeout(() => controller1.abort(), TIME_LIMIT * 1000);
+                
+                await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        compiler: 'gcc-head',
+                        code: 'int main(){}',
+                        stdin: ''
+                    }),
+                    signal: controller1.signal
+                });
+                
+                clearTimeout(timeout1);
+                
+                const baseline = (performance.now() - startBaseline) / 1000;
+                
+                // ===== 第二次：跑真实代码 =====
+                document.getElementById('output').textContent = 'Running...';
+                
+                const startReal = performance.now();
+                
+                const controller2 = new AbortController();
+                const timeout2 = setTimeout(() => controller2.abort(), TIME_LIMIT * 1000);
                 
                 const res = await fetch(API_URL, {
                     method: 'POST',
@@ -64,15 +87,19 @@ int main() {
                         code: code,
                         stdin: stdin
                     }),
-                    signal: controller.signal  // ← 绑定 AbortController
+                    signal: controller2.signal
                 });
                 
-                clearTimeout(timeoutId);  // 清除超时计时器
+                clearTimeout(timeout2);
                 
                 const data = await res.json();
-                const totalTime = (performance.now() - startTime) / 1000;
-                document.getElementById('time').textContent = totalTime.toFixed(4);
+                const totalTime = (performance.now() - startReal) / 1000;
                 
+                // ===== 估算执行时间 =====
+                const estimatedTime = totalTime - baseline;
+                document.getElementById('time').textContent = estimatedTime.toFixed(4);
+                
+                // ===== 显示输出 =====
                 if (data.program_output) {
                     document.getElementById('output').textContent = data.program_output;
                 } else if (data.compiler_error) {
@@ -86,16 +113,11 @@ int main() {
                 }
                 
             } catch (err) {
-                const totalTime = (performance.now() - startTime) / 1000;
-                
-                // 判断是否超时
                 if (err.name === 'AbortError') {
                     document.getElementById('output').textContent = 'Time Limit Exceeded (>10s)';
-                    document.getElementById('time').textContent = totalTime.toFixed(4);
-                    document.getElementById('error').textContent = '';
+                    document.getElementById('time').textContent = '>10';
                 } else {
                     document.getElementById('error').textContent = 'Error: ' + err.message;
-                    document.getElementById('time').textContent = totalTime.toFixed(4);
                 }
             }
         }
