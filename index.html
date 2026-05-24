@@ -34,23 +34,18 @@ int main() {
     
     <p>⏱️ Time: <span id="time"></span>s</p>
     <p style="color:red" id="error"></p>
-    
-    <hr>
-    
-    <details>
-        <summary>🔍 Debug: Raw JSON Response</summary>
-        <pre id="debug" style="background:#1e1e1e;color:#d4d4d4;padding:10px;border-radius:8px;overflow-x:auto;"></pre>
-    </details>
 
     <script>
         async function runCode() {
             const code = document.getElementById('code').value;
             const stdin = document.getElementById('stdin').value;
+            const TIME_LIMIT = 2.0;
             
             document.getElementById('output').textContent = 'Running...';
             document.getElementById('time').textContent = '...';
             document.getElementById('error').textContent = '';
-            document.getElementById('debug').textContent = '';
+            
+            const startTime = performance.now();
             
             try {
                 const CORS_PROXY = 'https://corsproxy.io/?';
@@ -68,33 +63,38 @@ int main() {
                 
                 const data = await res.json();
                 
-                // 🔍 显示完整 JSON
-                document.getElementById('debug').textContent = JSON.stringify(data, null, 2);
+                const endTime = performance.now();
+                const elapsed = (endTime - startTime) / 1000;
                 
-                // 显示输出
-                if (data.program_output) {
+                // 判断超时（粗略判断，包含网络延迟）
+                if (elapsed > 5 && !data.program_output) {
+                    document.getElementById('output').textContent = 'Time Limit Exceeded (or Timeout)';
+                    document.getElementById('time').textContent = '> ' + TIME_LIMIT + 's (waited ' + elapsed.toFixed(2) + 's)';
+                }
+                else if (data.program_output) {
                     document.getElementById('output').textContent = data.program_output;
-                } else if (data.program_error) {
-                    document.getElementById('output').textContent = data.program_error;
-                } else {
-                    document.getElementById('output').textContent = '(no output)';
+                    document.getElementById('time').textContent = elapsed.toFixed(4) + ' (incl. network)';
+                }
+                else if (data.compiler_error) {
+                    document.getElementById('output').textContent = data.compiler_error;
+                    document.getElementById('time').textContent = elapsed.toFixed(4) + ' (incl. network)';
+                }
+                else {
+                    document.getElementById('output').textContent = data.program_error || '(no output)';
+                    document.getElementById('time').textContent = elapsed.toFixed(4) + ' (incl. network)';
                 }
                 
-                // 显示错误
                 if (data.compiler_error) {
-                    document.getElementById('error').textContent = 'Compile Error: ' + data.compiler_error;
-                } else if (data.program_error) {
-                    document.getElementById('error').textContent = 'Runtime Error: ' + data.program_error;
+                    document.getElementById('error').textContent = 'Compile Error';
                 }
-                
-                // 显示执行时间
-                document.getElementById('time').textContent = (data.executed || 0).toFixed(4);
+                if (data.program_error) {
+                    document.getElementById('error').textContent = 'Runtime Error';
+                }
                 
             } catch (err) {
                 document.getElementById('error').textContent = 'Error: ' + err.message;
                 document.getElementById('output').textContent = '';
                 document.getElementById('time').textContent = 'Error';
-                document.getElementById('debug').textContent = 'Fetch Error: ' + err.message;
             }
         }
     </script>
