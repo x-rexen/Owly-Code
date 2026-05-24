@@ -51,8 +51,8 @@ int main() {
             document.getElementById('error').textContent = '';
             
             try {
-                // 加上 CORS 代理
-                const CORS_PROXY = 'https://corsproxy.io/?';
+                // 换一个备用的 CORS 代理
+                const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
                 const ONECOMPILER_URL = 'https://onecompiler.com/api/code/exec';
                 
                 const res = await fetch(CORS_PROXY + encodeURIComponent(ONECOMPILER_URL), {
