@@ -53,19 +53,22 @@ int main() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
     
+    <!-- OwlyCode API -->
+    <script src="owlycode-api.js"></script>
+    
     <script>
         // ===== 初始化 CodeMirror =====
         const editor = CodeMirror.fromTextArea(document.getElementById('code'), {
-            mode: 'text/x-c++src',      // C++ 语法高亮
-            theme: 'dracula',            // 暗色主题
-            lineNumbers: true,           // 🔢 行号
-            matchBrackets: true,         // {} 高亮匹配
-            autoCloseBrackets: true,     // 自动补全 } ]
-            indentUnit: 4,               // Tab = 4 空格
+            mode: 'text/x-c++src',
+            theme: 'dracula',
+            lineNumbers: true,
+            matchBrackets: true,
+            autoCloseBrackets: true,
+            indentUnit: 4,
             tabSize: 4,
             indentWithTabs: false,
             extraKeys: {
-                "Tab": function(cm) {    // 🎯 Tab 键缩进
+                "Tab": function(cm) {
                     cm.replaceSelection("    ", "end");
                 }
             }
@@ -99,61 +102,28 @@ int main() {
 }`
         };
         
-        // 设置默认模板
         editor.setValue(templates["A+B"]);
         
-        // ===== 模板切换 =====
         function setTemplate(name) {
             if (templates[name]) {
                 editor.setValue(templates[name]);
             }
         }
         
-        // ===== Wandbox API =====
-        const CORS_PROXY = 'https://corsproxy.io/?';
-        const WANDBOX_URL = 'https://wandbox.org/api/compile.json';
-        const API_URL = CORS_PROXY + encodeURIComponent(WANDBOX_URL);
-        
+        // ===== 运行代码 =====
         async function runCode() {
-            const code = editor.getValue();  // 从 CodeMirror 获取代码
+            const code = editor.getValue();
             const stdin = document.getElementById('stdin').value;
             
             document.getElementById('output').textContent = 'Running...';
             document.getElementById('time').textContent = '...';
             document.getElementById('error').textContent = '';
             
-            const startTime = performance.now();
+            const result = await owlyRunAccurate(code, stdin);
             
-            try {
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        compiler: 'gcc-head',
-                        code: code,
-                        stdin: stdin
-                    })
-                });
-                
-                const data = await res.json();
-                const totalTime = (performance.now() - startTime) / 1000;
-                document.getElementById('time').textContent = totalTime.toFixed(4);
-                
-                if (data.program_output) {
-                    document.getElementById('output').textContent = data.program_output;
-                } else if (data.compiler_error) {
-                    document.getElementById('output').textContent = data.compiler_error;
-                    document.getElementById('error').textContent = 'Compile Error';
-                } else if (data.program_error) {
-                    document.getElementById('output').textContent = data.program_error;
-                    document.getElementById('error').textContent = 'Runtime Error';
-                } else {
-                    document.getElementById('output').textContent = '(no output)';
-                }
-                
-            } catch (err) {
-                document.getElementById('error').textContent = 'Error: ' + err.message;
-            }
+            document.getElementById('output').textContent = result.output || '(no output)';
+            document.getElementById('time').textContent = result.time.toFixed(4);
+            document.getElementById('error').textContent = result.error;
         }
     </script>
 
