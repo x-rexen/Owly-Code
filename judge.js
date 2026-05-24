@@ -46,11 +46,11 @@ async function judge(code,input=''){
     const res=await run(code,input);
     const et=res.time-bl;
     return{
-        output:result.output,
-        error:result.error,
-        time:estimatedTime>0?estimatedTime:result.time,
+        output:res.output,
+        error:res.error,
+        time:estimatedTime>0?estimatedTime:res.time,
         baseline:baseline,
-        totalTime:result.time,
-        json:result.json
+        totalTime:res.time,
+        json:res.json
     };
 }
