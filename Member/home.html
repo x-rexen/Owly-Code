@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - Octet SMP</title>
+    <title>Home - OwlyCode</title>
     <link rel="stylesheet" href="../../style.css">
     <link rel="icon" href="../../images/Logo.png">
 </head>
@@ -17,7 +17,7 @@
 </div>
 
 <div style="max-width:1000px;margin:0 auto;padding:40px 20px">
-    <h1 id="wb" style="font-size:2.8em;margin:0 0 15px 0;font-weight:600">cout << "Hello " << endl;</h1>
+    <h1 id="wb" style="font-size:2.8em;margin:0 0 15px 0;font-weight:600">cout << "Hello OwlyCode!" << endl;</h1>
     <hr></hr>
     <div style="display:flex;gap:30px;max-width:1200px;margin:0 auto">
         <div style="flex:35%;border:2px dashed #2c3e2f;border-radius:12px;padding:25px">
@@ -36,7 +36,8 @@
 <script src="../../scripts/accountcheckhave.js"></script>
 <script>
     //checkhave('../Guest/home.html',null);
-    
+    var un=localStorage.getItem('un');
+    if(un)document.getElementById("myText").textContent = "Hello "+un+"!";
 </script>
 </body>
 </html>
