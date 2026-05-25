@@ -1,15 +1,76 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-Hant-HK">
 <head>
     <meta charset="UTF-8">
-    <title>OwlyCode</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owly-Code</title>
+    <link rel="icon" href="../../images/Logo.png">
+    <style>
+    .loader {
+        --main-size: 4em;
+        --text-color: #ffffff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        width: calc(var(--main-size) / 2);
+        height: 0.05em;
+        }
+
+        .loader .line {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+        border-radius: 0.05em;
+        }
+
+        .loader .line::before {
+        content: "";
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        background-color: var(--text-color);
+        opacity: 0.3;
+        }
+
+        .loader .line::after {
+        content: "";
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        background-color: var(--text-color);
+        border-radius: 0.05em;
+        transform: translateX(-90%);
+        animation: wobble 2s cubic-bezier(0.5, 0.8, 0.5, 0.2) infinite;
+        }
+
+        @keyframes wobble {
+        0% {
+            transform: translateX(-90%);
+        }
+        50% {
+            transform: translateX(90%);
+        }
+        100% {
+            transform: translateX(-90%);
+        }
+        }
+
+    </style>
 </head>
 <body>
-    <div style="background-color: #006400; color:white; padding:20px 0; text-align:center;width:100%;height:130%">OwlyCode</div>
-    <script>
+    <div class="loader">
         
-    </script>
+    <div class="line"></div>
+    </div>
 
+    <script src="scripts/googlesheet.js"></script>
+<script src="scripts/accountcheckhave.js"></script>
+    <script>
+        checkhave('html/Guest/home.html', 'html/Member/home.html');
+    </script>
 </body>
 </html>
