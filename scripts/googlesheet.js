@@ -1,6 +1,6 @@
 var CONFIG={
-    scriptUrl:'https://script.google.com/macros/s/AKfycbx7WDDkQ6SD0EqIa4qf-4SU1IBUQf5eaO08z7qU2ABc-yaB-EvqcN6TDzjnu4jKquUp/exec',
-    sheetId:'1EqgCYpYfwaKfUg4QMvLwqk_aWCNy-iapLLDCmVCWyDI'
+    scriptUrl:'https://script.google.com/macros/s/AKfycbxIbOkIn48_nRDPEfQ69PuR8WoeU-jLm8FiQg5Uy26tgk9M9iPuvay8UK4vhEyrN87fPw/exec',
+    sheetId:'1dOvHsJxH47L0eId6bwaX-jZ_rm2O5bAFzR71M9VUmYM'
 };
 
 async function findRowWhere(col1Matches,col2Matches,sheetName){
