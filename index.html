@@ -4,66 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Owly-Code</title>
-    <link rel="icon" href="img/icon.png">
+    <link class="icon" href="img/icon.png">
     <style>
-        body {
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #121212;
-        }
-
-        .loader-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1.5em;
-        }
-
-        .loader-icon {
-            --main-size: 4em;
-            width: var(--main-size);
-            height: var(--main-size);
-            animation: jump 1s ease-in-out infinite alternate;
-        }
-
-        .loader-line {
-            --line-width: 5em;
-            position: relative;
-            width: var(--line-width);
-            height: 0.15em;
-            overflow: hidden;
-            border-radius: 0.1em;
-        }
-
-        .loader-line::before {
-            content: "";
-            position: absolute;
-            height: 100%;
-            width: 100%;
-            background-color: #ffffff;
-            opacity: 0.2;
-        }
-
-        .loader-line::after {
-            content: "";
-            position: absolute;
-            height: 100%;
-            width: 100%;
-            background-color: #ffffff;
-            border-radius: 0.1em;
-            transform: translateX(-90%);
-            animation: wobble 2s cubic-bezier(0.5, 0.8, 0.5, 0.2) infinite;
-        }
-
         @keyframes jump {
             0% {
                 transform: translateY(0);
             }
             100% {
-                transform: translateY(-20px);
+                transform: translateY(-30px);
             }
         }
 
@@ -78,13 +26,33 @@
                 transform: translateX(-90%);
             }
         }
+
+        .loader-line::before {
+            content: "";
+            position: absolute;
+            height: 100%;
+            width: 100%;
+            background-color: #000000;
+            opacity: 0.15;
+        }
+
+        .loader-line::after {
+            content: "";
+            position: absolute;
+            height: 100%;
+            width: 100%;
+            background-color: #000000;
+            border-radius: 0.1em;
+            transform: translateX(-90%);
+            animation: wobble 2s cubic-bezier(0.5, 0.8, 0.5, 0.2) infinite;
+        }
     </style>
 </head>
-<body>
+<body style="margin: 0; height: 100vh; display: flex; justify-content: center; align-items: center; background-color: #ffffff;">
     
-    <div class="loader-container">
-        <img class="loader-icon" src="img/icon.png" alt="Loading...">
-        <div class="loader-line"></div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 2em;">
+        <img src="img/icon.png" alt="Loading..." style="width: 6.5em; height: 6.5em; animation: jump 1s ease-in-out infinite alternate;">
+        <div class="loader-line" style="position: relative; width: 8em; height: 0.2em; overflow: hidden; border-radius: 0.1em;"></div>
     </div>
 
     <script src="scripts/googlesheet.js"></script>
